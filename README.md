@@ -121,7 +121,7 @@ Jenkins/
 ├── lambda.zip                     # Packaged Lambda deployment
 ├── screenshots
 ├── Readme.md
-|--- requirement.txt
+|--- requirements.txt
 ```
 
 ---
@@ -208,4 +208,5 @@ pipeline {
     }
   }
 }
+
 
