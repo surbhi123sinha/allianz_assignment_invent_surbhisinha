@@ -181,12 +181,7 @@ Attach these to Lambda role:
   "Effect": "Allow",
   "Action": [
     "ec2:*",
-    "secretsmanager:CreateSecret",
-    "secretsmanager:GetSecretValue",
-    "secretsmanager:DeleteSecret",
-    "secretsmanager:PutSecretValue",
-    "secretsmanager:UpdateSecret",
-    "secretsmanager:ListSecrets"
+    "secretsmanager:*"
   ],
   "Resource": "*"
 }
@@ -213,3 +208,4 @@ pipeline {
     }
   }
 }
+
