@@ -96,4 +96,120 @@ Otherwise: terminates the instance.
 
 If action is missing or invalid: returns error "Invalid action. Use start, stop, terminate, or create."
 If instance_id is missing for actions that require it: returns error "Missing 'instanceId' for <action>".
+
 Any unexpected exception: returns a 500 error with the exception message.
+
+
+
+## Implmentation with terraform and jenkins 
+
+## 📦 Project Structure
+
+```
+Jenkins/
+├── terraform/                # Terraform IaC files
+│   ├── api.tf                # API Gateway setup
+│   ├── iam.tf                # IAM roles and policies
+│   ├── lambda.tf             # Lambda function configuration
+│   ├── outputs.tf            # Terraform outputs
+│   ├── provider.tf           # AWS provider setup
+│   ├── variables.tf          # Input variables
+│   ├──src
+│    ├── app.py                    # Flask UI for EC2 control
+│    ├── lambda_api_runner.py      # Jenkins runner script
+│    ├── lambda_handler.py         # Lambda function code
+├── lambda.zip                     # Packaged Lambda deployment
+├── screenshots
+├── Readme.md
+|--- requirement.txt
+```
+
+---
+
+## 🛠️ Prerequisites
+
+- AWS CLI configured with credentials
+- Terraform installed
+- Python 3.12
+- Jenkins installed and configured
+- IAM user with EC2, Lambda, Secrets Manager permissions
+
+---
+
+## 🚀 How It Works
+
+### Lambda Function
+- Handles EC2 actions: create, start, stop, terminate, list
+- Stores SSH private key in Secrets Manager
+- Returns public IP and SSH command
+
+### API Gateway
+- HTTP API with POST and OPTIONS routes
+- Forwards requests to Lambda using AWS_PROXY integration
+
+### Terraform
+- Provisions Lambda, API Gateway, IAM roles
+- Auto-deploys changes with `$default` stage
+
+
+### Jenkins
+- Automates API calls using `lambda_api_runner.py`
+- Can be triggered manually or on GitHub push
+
+---
+
+## ⚙️ Setup Instructions
+
+### 1. Deploy Infrastructure with Terraform
+```bash
+cd terraform
+terraform init
+terraform apply
+```
+
+### 2. Package Lambda Function
+```bash
+zip lambda.zip lambda_handler.py
+```
+
+
+## 🔐 IAM Permissions
+
+Attach these to Lambda role:
+```json
+{
+  "Effect": "Allow",
+  "Action": [
+    "ec2:*",
+    "secretsmanager:CreateSecret",
+    "secretsmanager:GetSecretValue",
+    "secretsmanager:DeleteSecret",
+    "secretsmanager:PutSecretValue",
+    "secretsmanager:UpdateSecret",
+    "secretsmanager:ListSecrets"
+  ],
+  "Resource": "*"
+}
+```
+Also attach: `AWSLambdaBasicExecutionRole`
+
+---
+
+## 🧰 Jenkins Pipeline Configuration
+
+### Sample Jenkinsfile
+
+pipeline {
+  agent any
+  environment {
+    ENDPOINT = 'https://<your-api-id>.execute-api.us-east-1.amazonaws.com'
+    MY_IP = '136.226.232.163/32'
+  }
+  stages {
+    stage('Run Lambda API') {
+      steps {
+        bat 'python lambda_api_runner.py'
+      }
+    }
+  }
+}
